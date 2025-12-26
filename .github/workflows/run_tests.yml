@@ -1,0 +1,24 @@
+name: Run nviman tests
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: ["1.23", "1.24", "1.25"]
+
+    steps:
+      - uses: actions/checkout@v6
+      - name: Setup Go ${{ matrix.go-version }}
+        uses: actions/setup-go@v6
+        with:
+          go-version: ${{ matrix.go-version }}
+      - name: Install dependencies
+        run: |
+          go mod tidy
+      - name: Run go unit tests
+        run: |
+          make test

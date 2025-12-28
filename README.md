@@ -1,7 +1,7 @@
-# Candango nviman
+# Candango nvimm
 
 A lightweight command-line utility written in **Go** to manage **neovim**
-versions directly from official releases. `nviman` simplifies the process of
+versions directly from official releases. `nvimm` simplifies the process of
 listing, installing and switching between different neovim builds.
 
 ---
@@ -21,7 +21,7 @@ listing, installing and switching between different neovim builds.
 Ensure you have **Go** installed on your system:
 
 ```bash
-go install [github.com/candango/nviman@latest](https://github.com/candango/nviman@latest)
+go install [github.com/candango/nvimm@latest](https://github.com/candango/nvimm@latest)
 
 ```
 
@@ -34,7 +34,7 @@ go install [github.com/candango/nviman@latest](https://github.com/candango/nvima
 Retrieve a list of versions available from the official neovim repository:
 
 ```bash
-nviman list
+nvimm list
 
 ```
 
@@ -43,7 +43,7 @@ nviman list
 Download and install a specific tag or build:
 
 ```bash
-nviman install v0.11.3
+nvimm install v0.11.3
 
 ```
 
@@ -52,7 +52,7 @@ nviman install v0.11.3
 Switch the active `nvim` binary to a previously installed version:
 
 ```bash
-nviman use v0.11.3
+nvimm use v0.11.3
 
 ```
 
@@ -64,13 +64,13 @@ To contribute or build the project locally:
 
 1. Clone the repository:
 ```bash
-git clone [https://github.com/candango/nviman.git](https://github.com/candango/nviman.git)
+git clone [https://github.com/candango/nvimm.git](https://github.com/candango/nvimm.git)
 
 ```
 
 2. Navigate to the directory:
 ```bash
-cd nviman
+cd nvimm
 
 ```
 
@@ -78,7 +78,7 @@ cd nviman
 3. Build the binary:
 
 ```bash
-go build -o nviman .
+go build -o nvimm .
 
 ```
 

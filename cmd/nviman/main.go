@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/candango/nviman/internal/cli"
+	"github.com/candango/nvimm/internal/cli"
 	"github.com/jessevdk/go-flags"
 )
 
@@ -29,7 +29,7 @@ func main() {
 		&cli.InstallCommand{})
 	parser.AddCommand("list",
 		"List Neovim installed versions",
-		"List all Neovim versions currently installed and managed by nviman on this machine.",
+		"List all Neovim versions currently installed and managed by nvimm on this machine.",
 		&cli.ListCommand{})
 
 	_, err := parser.Parse()

@@ -9,10 +9,12 @@ import (
 
 // Root options
 type Options struct {
-	Verbose bool `short:"v" long:"verbose" description:"Enable verbose mode"`
+	Verbose    bool   `short:"v" long:"verbose" description:"Enable verbose mode"`
+	ConfigPath string `short:"c" long:"config" description:"Configuration file path"`
 }
 
 func main() {
+
 	var opts Options
 
 	parser := flags.NewParser(&opts, flags.Default)

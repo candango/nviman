@@ -99,5 +99,13 @@ func WithPathsResolved(opts *AppOptions) error {
 				opts.Path, err)
 		}
 	}
+
+	if !pathx.Exists(opts.CachePath()) {
+		err := os.MkdirAll(opts.CachePath(), 0755)
+		if err != nil {
+			return fmt.Errorf("error creating nvimm path %s: %v",
+				opts.CachePath(), err)
+		}
+	}
 	return nil
 }

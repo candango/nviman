@@ -139,5 +139,6 @@ func TestOptions(t *testing.T) {
 		assert.DirExists(t, opts.ConfigDir)
 		assert.FileExists(t, opts.ConfigPath)
 		assert.DirExists(t, opts.Path)
+		assert.DirExists(t, opts.CachePath())
 	})
 }

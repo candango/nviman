@@ -7,17 +7,13 @@ import (
 	"github.com/jessevdk/go-flags"
 )
 
-// Root options
-type Options struct {
-	Verbose    bool   `short:"v" long:"verbose" description:"Enable verbose mode"`
-	ConfigPath string `short:"c" long:"config" description:"Configuration file path"`
-}
-
 func main() {
-
-	var opts Options
+	var opts cli.AppOptions
 
 	parser := flags.NewParser(&opts, flags.Default)
+	parser.Usage = "[Options] command"
+
+	parser.CommandHandler = cli.WithAppOptions(&opts, cli.WithPathsResolved)
 
 	parser.AddCommand(
 		"current",
@@ -29,16 +25,20 @@ func main() {
 		"Install the latest or a specific Neovim version",
 		"Download and install Neovim binaries directly from official releases. Supports 'latest', 'nightly', or specific version tags.",
 		&cli.InstallCommand{})
-	parser.AddCommand("list",
+	parser.AddCommand(
+		"list",
 		"List Neovim installed versions",
 		"List all Neovim versions currently installed and managed by nvimm on this machine.",
 		&cli.ListCommand{})
 
 	_, err := parser.Parse()
 	if err != nil {
-		if flagsErr, ok := err.(*flags.Error); ok && flagsErr.Type == flags.ErrUnknownCommand {
+		if flagsErr, ok := err.(*flags.Error); ok && (flagsErr.Type == flags.ErrUnknownCommand || flagsErr.Type == flags.ErrUnknownFlag) {
 			parser.WriteHelp(os.Stderr)
 			os.Exit(1)
+		}
+		if flagsErr, ok := err.(*flags.Error); ok && flagsErr.Type == flags.ErrHelp {
+			os.Exit(0)
 		}
 		parser.WriteHelp(os.Stderr)
 		os.Exit(1)

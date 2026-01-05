@@ -104,6 +104,12 @@ func (cmd *InstallCommand) Execute(args []string) error {
 	if err != nil {
 		return err
 	}
+	downloadedFile := filepath.Join(cachePath, downloadedRelease)
+	fmt.Printf("the release %s was downloaded to %s\n", downloadedRelease, cachePath)
+	fingerprint, err := filehash.SHA256(downloadedFile)
+	if err != nil {
+		return err
+	}
 
 	fmt.Printf("the release %s was downloaded to %s/n", downloadedRelease, cachePath)
 

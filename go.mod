@@ -5,7 +5,7 @@ go 1.23
 require (
 	github.com/candango/gopeasant v0.2.9
 	github.com/candango/httpok v0.1.0
-	github.com/candango/iook v0.0.2
+	github.com/candango/iook v0.0.3
 	github.com/jessevdk/go-flags v1.6.1
 	github.com/stretchr/testify v1.11.1
 	gopkg.in/yaml.v3 v3.0.1

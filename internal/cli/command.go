@@ -16,6 +16,7 @@ import (
 	"github.com/candango/iook/dir"
 	"github.com/candango/iook/pathx"
 	"github.com/candango/nvimm/internal/cache"
+	"github.com/candango/nvimm/internal/filehash"
 	"github.com/candango/nvimm/internal/protocol"
 	"github.com/candango/nvimm/internal/release"
 )
@@ -86,13 +87,14 @@ func (cmd *InstallCommand) Execute(args []string) error {
 	goos := runtime.GOOS
 	goarch := runtime.GOARCH
 	assetUrl := ""
+	assetDigest := ""
 	assetFound := false
 
 	for _, asset := range info.Assets {
-
 		if asset.Name == getTarballName(goos, goarch) {
 			assetFound = true
 			assetUrl = fmt.Sprintf("%s/%s", strings.ReplaceAll(info.HtmlUrl, "tag", "download"), asset.Name)
+			assetDigest = asset.Digest
 		}
 	}
 
@@ -111,7 +113,10 @@ func (cmd *InstallCommand) Execute(args []string) error {
 		return err
 	}
 
-	fmt.Printf("the release %s was downloaded to %s/n", downloadedRelease, cachePath)
+	if fingerprint != assetDigest {
+		return fmt.Errorf("the downloaded file is corrupted: expected %s but got %s",
+			assetDigest, fingerprint)
+	}
 
 	untarFile(filepath.Join(cachePath, downloadedRelease))
 

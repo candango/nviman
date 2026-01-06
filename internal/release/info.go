@@ -3,8 +3,13 @@ package release
 import (
 	"encoding/json"
 	"fmt"
+	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/candango/iook/pathx"
 )
 
 type Releases []Info
@@ -34,6 +39,18 @@ func (rs *Releases) Process(data []byte) error {
 		if info.TagName == "stable" {
 			stable = info
 			releases = append(releases[:i], releases[i+1:]...)
+			continue
+		}
+		if info.VersionLess("0.11.3") {
+			fmt.Println(info.TagName)
+			checksums := info.ChecksumsFromBody()
+			for i, asset := range info.Assets {
+				digest, ok := checksums[asset.Name]
+				if ok {
+					asset.Digest = fmt.Sprintf("sha256:%s", digest)
+					info.Assets[i] = asset
+				}
+			}
 		}
 	}
 	for i, info := range releases {
@@ -93,6 +110,42 @@ func (i *Info) CleanTagName() string {
 	return strings.ReplaceAll(i.TagName, "v", "")
 }
 
+// VersionLess compares two version strings in "major.minor.patch" format.
+// Returns true if the target version (i.CleanTagName()) is less than the
+// reference version (v).
+//
+// Example: versionLess("0.11.3") returns true when i.CleanTagName() is
+// "0.11.2".
+func (i *Info) VersionLess(v string) bool {
+	if i.CleanTagName() == "nightly" || i.TagName == "stable" {
+		return false
+	}
+	s1 := strings.Split(i.CleanTagName(), ".")
+	s2 := strings.Split(v, ".")
+	for i := 0; i < len(s1) && i < len(s2); i++ {
+		n1, _ := strconv.Atoi(s1[i])
+		n2, _ := strconv.Atoi(s2[i])
+		if n1 < n2 {
+			return true
+		} else if n1 > n2 {
+			return false
+		}
+	}
+	return len(s1) < len(s2)
+}
+
+var checksumRe = regexp.MustCompile(`([a-f0-9]{64})\s+([^\s]+)`)
+
+func (i *Info) ChecksumsFromBody() map[string]string {
+	result := make(map[string]string)
+	matches := checksumRe.FindAllStringSubmatch(i.Body, -1)
+	for _, m := range matches {
+		result[m[2]] = m[1]
+	}
+	return result
+}
+
+// Reaction represents a GitHub reaction to a release.
 type Reaction struct {
 	Url        string `json:"url"`
 	Confused   string `json:"confused"`

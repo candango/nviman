@@ -12,8 +12,12 @@ import (
 	"github.com/candango/iook/pathx"
 )
 
+// Releases represents a list of GitHub release information.
 type Releases []Info
 
+// Get retrieves the Info for a specific release. It supports the special
+// identifier "stable" to fetch the stable release. If the release does not
+// exist, it returns an error.
 func (rs *Releases) Get(release string) (*Info, error) {
 	releases := *rs
 
@@ -63,6 +67,7 @@ func (rs *Releases) Process(data []byte) error {
 	return nil
 }
 
+// Asset represents a GitHub release asset.
 type Asset struct {
 	Id            float64   `json:"id"`
 	NodeId        string    `json:"node_id"`
@@ -78,6 +83,7 @@ type Asset struct {
 	Uploader      User      `json:"uploader"`
 }
 
+// Info represents a GitHub release information.
 type Info struct {
 	Id              float64   `json:"id"`
 	Author          User      `json:"author"`
@@ -103,6 +109,8 @@ type Info struct {
 	// Reactions   []Reaction `json:"reactions"`
 }
 
+// CleanTagName returns the tag name without the "v" prefix. If the tag name is
+// "nightly", it is returned as is.
 func (i *Info) CleanTagName() string {
 	if i.TagName == "nightly" {
 		return i.TagName
@@ -159,6 +167,7 @@ type Reaction struct {
 	TotalCount string `json:"total_count"`
 }
 
+// User represents a GitHub user.
 type User struct {
 	Id                float64 `json:"id"`
 	NodeId            string  `json:"node_id"`

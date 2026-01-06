@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"archive/tar"
 	"compress/gzip"
 	"fmt"
 	"io"
@@ -13,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/candango/iook/archive"
 	"github.com/candango/iook/dir"
 	"github.com/candango/iook/pathx"
 	"github.com/candango/nvimm/internal/cache"
@@ -42,11 +42,16 @@ func (cmd *InstallCommand) Execute(args []string) error {
 		return fmt.Errorf("positional argument release was not informed\n")
 	}
 	cmd.Release = args[0]
-	if !pathx.Exists(cmd.appOptions.CachePath()) {
+	if !pathx.Exists(cmd.appOptions.CachePath) {
 		return fmt.Errorf("cache path does not exist: %s",
-			cmd.appOptions.CachePath())
+			cmd.appOptions.CachePath)
 	}
-	cachePath := cmd.appOptions.CachePath()
+	if !pathx.Exists(cmd.appOptions.Path) {
+		return fmt.Errorf("nvim path does not exist: %s",
+			cmd.appOptions.Path)
+	}
+	// nvimPath := cmd.appOptions.Path
+	cachePath := cmd.appOptions.CachePath
 
 	releaseCacher := cache.NewFileCacher(cachePath, "nvimm_releases.json")
 	gt, err := protocol.NewGithubTransport()
@@ -118,7 +123,19 @@ func (cmd *InstallCommand) Execute(args []string) error {
 			assetDigest, fingerprint)
 	}
 
-	untarFile(filepath.Join(cachePath, downloadedRelease))
+	f, err := os.Open(downloadedFile)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	gzr, err := gzip.NewReader(f)
+	if err != nil {
+		return err
+	}
+	defer gzr.Close()
+	fmt.Printf("extracting to %s\n", filepath.Dir(downloadedFile))
+	archive.Untar(gzr, filepath.Dir(downloadedFile))
 
 	releasePath := strings.ReplaceAll(
 		filepath.Join(cachePath, downloadedRelease), ".tar.gz", "")
@@ -145,83 +162,6 @@ func getTarballName(goos string, goarch string) string {
 	}
 
 	return ""
-}
-
-func untarFile(path string) error {
-	destDir := filepath.Dir(path)
-	f, err := os.Open(path)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	gzr, err := gzip.NewReader(f)
-	if err != nil {
-		return err
-	}
-	defer gzr.Close()
-
-	tr := tar.NewReader(gzr)
-	for {
-		header, err := tr.Next()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return err
-		}
-
-		// Sanitize path to prevent path traversal (security check)
-		name := filepath.Clean(header.Name)
-		if strings.Contains(name, "..") || filepath.IsAbs(name) {
-			return fmt.Errorf(
-				"security error: tar entry %q contains an invalid or unsafe "+
-					"path (possible path traversal attempt), extraction "+
-					"aborted", name)
-		}
-		target := filepath.Join(destDir, name)
-
-		switch header.Typeflag {
-		case tar.TypeDir:
-			if err := os.MkdirAll(target, os.FileMode(header.Mode)); err != nil {
-				return err
-			}
-		case tar.TypeReg:
-			if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
-				return err
-			}
-			outFile, err := os.Create(target)
-			if err != nil {
-				return err
-			}
-			if _, err := io.Copy(outFile, tr); err != nil {
-				outFile.Close()
-				return err
-			}
-			outFile.Close()
-			if err := os.Chmod(target, os.FileMode(header.Mode)); err != nil {
-				return err
-			}
-			// Set timestamps
-			if err := os.Chtimes(target, header.AccessTime, header.ModTime); err != nil {
-				// Not fatal, continue
-			}
-			// TODO: Set file ownership (UID/GID) if needed and running as root
-		case tar.TypeSymlink:
-			if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
-				return err
-			}
-			if err := os.Symlink(header.Linkname, target); err != nil {
-				return err
-			}
-		case tar.TypeLink:
-			linkTarget := filepath.Join(destDir, header.Linkname)
-			if err := os.Link(linkTarget, target); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
 }
 
 func downloadRelease(url string, destDir string) (string, error) {

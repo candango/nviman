@@ -11,15 +11,11 @@ import (
 
 type AppOptions struct {
 	Verbose        bool   `short:"v" long:"verbose" description:"Enable verbose mode"`
-	CacheSubDir    string `short:"C" long:"cache-sub-dir" env:"NVIMM_CACHE_SUB_DIR" default:"cache" description:"Cache sub directory"`
+	CachePath      string `short:"C" long:"cache-path" env:"NVIMM_CACHE_PATH" description:"Cache directory"`
 	ConfigPath     string `short:"c" long:"config" env:"NVIMM_CONFIG_PATH" description:"Configuration file path"`
 	ConfigDir      string `short:"d" long:"config-dir" env:"NVIMM_CONFIG_DIR" description:"Configuration file directory"`
 	ConfigFileName string `short:"n" long:"config-file-name" env:"NVIMM_CONFIG_FILE_NAME" default:"nvimm.yml" description:"Configuration file name"`
-	Path           string `short:"p" long:"path" env:"NVIMM_PATH" description:"Configuration file directory"`
-}
-
-func (opts *AppOptions) CachePath() string {
-	return filepath.Join(opts.Path, opts.CacheSubDir)
+	Path           string `short:"p" long:"path" env:"NVIMM_PATH" description:"Path where Neovim releases are installed"`
 }
 
 type AppOptionsAware interface {
@@ -46,11 +42,19 @@ func WithAppOptions(opts *AppOptions, fns ...AppOptionsFunc) func(cmd flags.Comm
 		opts.ConfigPath = filepath.Join(opts.ConfigDir, opts.ConfigFileName)
 
 		if opts.Path == "" {
+			userHomeDir, err := os.UserHomeDir()
+			if err != nil {
+				return err
+			}
+			opts.Path = filepath.Join(userHomeDir, ".nvimm")
+		}
+
+		if opts.CachePath == "" {
 			userCacheDir, err := os.UserCacheDir()
 			if err != nil {
 				return err
 			}
-			opts.Path = filepath.Join(userCacheDir, "nvimm")
+			opts.CachePath = filepath.Join(userCacheDir, "nvimm")
 		}
 
 		// Apply extra functions
@@ -100,11 +104,11 @@ func WithPathsResolved(opts *AppOptions) error {
 		}
 	}
 
-	if !pathx.Exists(opts.CachePath()) {
-		err := os.MkdirAll(opts.CachePath(), 0755)
+	if !pathx.Exists(opts.CachePath) {
+		err := os.MkdirAll(opts.CachePath, 0755)
 		if err != nil {
-			return fmt.Errorf("error creating nvimm path %s: %v",
-				opts.CachePath(), err)
+			return fmt.Errorf("error creating nvimm cache path %s: %v",
+				opts.CachePath, err)
 		}
 	}
 	return nil

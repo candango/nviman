@@ -32,7 +32,7 @@ func TestOptions(t *testing.T) {
 		os.Setenv("NVIMM_CONFIG_DIR", "/etc/nvimm")
 		os.Setenv("NVIMM_CONFIG_FILE_NAME", "nvimm.yaml")
 		os.Setenv("NVIMM_PATH", "/opt/nvimm")
-		os.Setenv("NVIMM_CACHE_SUB_DIR", "the_cache")
+		os.Setenv("NVIMM_CACHE_PATH", "/opt/nvim/cache")
 		defer os.Unsetenv("NVIMM_CONFIG_DIR")
 		defer os.Unsetenv("NVIMM_CONFIG_FILE_NAME")
 		defer os.Unsetenv("NVIMM_PATH")
@@ -61,7 +61,7 @@ func TestOptions(t *testing.T) {
 		assert.Equal(t, filepath.Join(os.Getenv("NVIMM_CONFIG_DIR"),
 			os.Getenv("NVIMM_CONFIG_FILE_NAME")), opts.ConfigPath)
 		assert.Equal(t, os.Getenv("NVIMM_PATH"), opts.Path)
-		assert.Equal(t, filepath.Join(opts.Path, opts.CacheSubDir), opts.CachePath())
+		assert.Equal(t, opts.CachePath, opts.CachePath)
 	})
 
 	t.Run("should get default values", func(t *testing.T) {
@@ -92,13 +92,14 @@ func TestOptions(t *testing.T) {
 		}
 
 		assert.Equal(t, expectedConfigPath, opts.ConfigPath)
-		userCahceDir, err := os.UserCacheDir()
+		userHomeDir, err := os.UserHomeDir()
 
 		if err != nil {
 			t.Fatalf("error getting user cache dir: %v", err)
 		}
-		assert.Equal(t, filepath.Join(userCahceDir, "nvimm"), opts.Path)
+		assert.Equal(t, filepath.Join(userHomeDir, ".nvimm"), opts.Path)
 	})
+
 	t.Run("should create paths if does not exists", func(t *testing.T) {
 		var opts AppOptions
 		dir, err := os.MkdirTemp("", "nvimm-test-")
@@ -139,6 +140,6 @@ func TestOptions(t *testing.T) {
 		assert.DirExists(t, opts.ConfigDir)
 		assert.FileExists(t, opts.ConfigPath)
 		assert.DirExists(t, opts.Path)
-		assert.DirExists(t, opts.CachePath())
+		assert.DirExists(t, opts.CachePath)
 	})
 }

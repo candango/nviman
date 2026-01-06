@@ -31,6 +31,40 @@ func (rs *Releases) Get(release string) (*Info, error) {
 	}
 	return nil, fmt.Errorf("release %s does not exists", release)
 }
+
+// Installed returns a list of releases that are present in the specified path.
+func (rs *Releases) Installed(path string) []Info {
+	releases := *rs
+	installed := []Info{}
+	for _, info := range releases {
+		if pathx.Exists(filepath.Join(path, info.CleanTagName())) {
+			installed = append(installed, info)
+		}
+	}
+	return installed
+}
+
+// Available returns a list of releases that are not present in the installed
+// releases.
+func (rs *Releases) Available(installed []Info) []Info {
+	releases := *rs
+	installedDict := map[string]bool{}
+	for _, info := range installed {
+		installedDict[info.CleanTagName()] = true
+	}
+	available := []Info{}
+	for _, info := range releases {
+		ok := installedDict[info.CleanTagName()]
+		if !ok {
+			available = append(available, info)
+		}
+	}
+	return available
+}
+
+// Process unmarshals the provided JSON data into the Releases struct. It also
+// identifies the stable release and marks the corresponding Info entries
+// accordingly.
 func (rs *Releases) Process(data []byte) error {
 	err := json.Unmarshal(data, &rs)
 	if err != nil {

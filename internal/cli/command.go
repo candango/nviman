@@ -196,11 +196,11 @@ type ListCommand struct {
 }
 
 func (cmd *ListCommand) Execute(args []string) error {
-	if !pathx.Exists(cmd.appOptions.CachePath()) {
+	if !pathx.Exists(cmd.appOptions.CachePath) {
 		return fmt.Errorf("cache path does not exist: %s",
-			cmd.appOptions.CachePath())
+			cmd.appOptions.CachePath)
 	}
-	cachePath := cmd.appOptions.CachePath()
+	cachePath := cmd.appOptions.CachePath
 	releaseCacher := cache.NewFileCacher(cachePath, "nvimm_releases.json")
 	gt, err := protocol.NewGithubTransport()
 	if err != nil {
@@ -234,7 +234,27 @@ func (cmd *ListCommand) Execute(args []string) error {
 		return fmt.Errorf("failed to process releases: %w", err)
 	}
 
-	for _, info := range releases {
+	installed := releases.Installed(cmd.appOptions.Path)
+
+	fmt.Println("Installed versions")
+	if len(installed) == 0 {
+		fmt.Println("  no releases installed")
+	}
+
+	for _, info := range installed {
+		if info.Stable == true {
+			fmt.Printf("  %s (stable)\n", info.CleanTagName())
+			continue
+		}
+		fmt.Printf("  %s\n", info.CleanTagName())
+	}
+
+	available := releases.Available(installed)
+	fmt.Println("\nAvailable versions")
+	if len(available) == 0 {
+		fmt.Println("  no releases installed")
+	}
+	for _, info := range available {
 		if info.Stable == true {
 			fmt.Printf("%s (stable)\n", info.CleanTagName())
 			continue
